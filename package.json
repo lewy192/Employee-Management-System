@@ -1,0 +1,24 @@
+{
+    "name": "hw-employee-management-system",
+    "version": "1.0.0",
+    "description": "CLI employment management system ",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/lewy192/Employee-Management-System.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/lewy192/Employee-Management-System/issues"
+    },
+    "homepage": "https://github.com/lewy192/Employee-Management-System#readme",
+    "dependencies": {
+        "inquirer": "^8.0.0",
+        "mysql": "^2.18.1"
+    }
+}
