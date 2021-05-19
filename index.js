@@ -3,7 +3,7 @@ const inquirer = require("inquirer");
 const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "rootroot",
+    password: "lewyiscool92",
     database: "departments",
 });
 
@@ -14,6 +14,9 @@ connection.connect((err) => {
 mainMenu = () => {
     // TODO : check if departement and roles are empty
     // if so push the user to enter atleast 1 department and role
+    connection.qusery(`SELECT * from users `,)
+
+
 
     inquirer
         .prompt({
@@ -29,7 +32,6 @@ mainMenu = () => {
                 "Edit employees",
                 "Edit roles",
                 "Edit departments",
-
                 "exit",
             ],
         })
