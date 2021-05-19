@@ -4,7 +4,7 @@ const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "lewyiscool92",
-    database: "departments",
+    database: "department",
 });
 
 connection.connect((err) => {
@@ -14,9 +14,7 @@ connection.connect((err) => {
 mainMenu = () => {
     // TODO : check if departement and roles are empty
     // if so push the user to enter atleast 1 department and role
-    connection.qusery(`SELECT * from users `,)
-
-
+    // connection.qusery(`SELECT * from users `,)
 
     inquirer
         .prompt({
@@ -28,7 +26,7 @@ mainMenu = () => {
                 "View All Employees By Department",
                 "View All Employees By Manager",
                 "View All Departments",
-                "VIew All Roles",
+                "View All Roles",
                 "Edit employees",
                 "Edit roles",
                 "Edit departments",
@@ -37,6 +35,15 @@ mainMenu = () => {
         })
         .then((choice) => {
             switch (choice.action) {
+                case "View All Employees":
+                    viewTable("employee");
+                    break;
+                case "View All Departments":
+                    viewTable("department");
+                    break;
+                case "View All Roles":
+                    viewTable("role");
+                    break;
                 case "Edit employees":
                     editEmployeeMenu();
                     break;
@@ -158,6 +165,20 @@ editRoles = () => {
             "Main Menu",
             "exit",
         ],
+    });
+};
+
+viewTable = (tableName) => {
+    connection.query(`SELECT * from ${tableName}`, (err, res) => {
+        if (err) console.log(err);
+        if (res.length > 0) {
+            console.table(res);
+        } else {
+            console.log(
+                `------\n There are no ${tableName}s in your business yet.\n------`
+            );
+            mainMenu();
+        }
     });
 };
 
