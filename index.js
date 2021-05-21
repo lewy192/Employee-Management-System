@@ -3,14 +3,17 @@ const inquirer = require("inquirer");
 const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "lewyiscool92",
-    database: "department",
+    password: "rootroot",
+    database: "departments",
 });
 
-connection.connect((err) => {
-    if (err) throw err;
-});
+connection.connect(function (err) {
+    if (err) {
+        return console.error("error: " + err.message);
+    }
 
+    console.log("Connected to the MySQL server.");
+});
 mainMenu = () => {
     // TODO : check if departement and roles are empty
     // if so push the user to enter atleast 1 department and role
@@ -27,17 +30,53 @@ mainMenu = () => {
                 "View All Employees By Manager",
                 "View All Departments",
                 "View All Roles",
-                "Edit employees",
-                "Edit roles",
+                "Remove Employee",
+                "Update Employees Role",
                 "Edit departments",
                 "exit",
             ],
         })
         .then((choice) => {
+            // console.log(choice);
             switch (choice.action) {
                 case "View All Employees":
-                    connection.query(`select * from employee
-                from`);
+                    connection.query(
+                        `select e.*, 
+                    role.title, role.salary, role.department_id,
+                    d.department_name
+                    from employee e 
+                    inner join role on e.role_id = role.id
+                    inner join department d on d.id = role.department_id;`,
+                        (err, res) => {
+                            if (err) {
+                                console.log(err);
+                                mainMenu();
+                            }
+                            console.table(res);
+                            mainMenu();
+                        }
+                    );
+                    break;
+                case "View All Employees By Department":
+                    connection.query(
+                        `select e.*,
+                        d.department_name
+                        from employee e 
+                        inner join role on e.role_id = role.id
+                        inner join department d on d.id = role.department_id
+                        ORDER BY d.department_name ASC;`,
+                        (err, res) => {
+                            if (err) {
+                                console.log(err);
+                                mainMenu();
+                            }
+                            console.table(res);
+                            mainMenu();
+                        }
+                    );
+                    // viewTable("department");
+                    break;
+                case "View All Employees By Department":
                     break;
                 case "View All Departments":
                     viewTable("department");
@@ -45,11 +84,11 @@ mainMenu = () => {
                 case "View All Roles":
                     viewTable("role");
                     break;
-                case "Edit employees":
-                    editEmployeeMenu();
+                case "Remove Employee":
+                    removeEmployee();
                     break;
-                case "Edit roles":
-                    editRoles();
+                case "Update Employees Role":
+                    updateEmployeeRole();
                     break;
                 case "Edit departments":
                     editDepartments();
@@ -61,47 +100,6 @@ mainMenu = () => {
                     mainMenu();
             }
         });
-};
-
-editEmployeeMenu = () => {
-    if (!checkTable("employee")) {
-        inquirer
-            .prompt({
-                name: "action",
-                type: "list",
-                message: "What would you like to do?",
-                choices: [
-                    "Add employee",
-                    "Remove employee",
-                    "Update employee",
-                    "Main Menu",
-                    "exit",
-                ],
-            })
-            .then((choice) => {
-                switch (choice.action) {
-                    case "Add employee":
-                        addEmployee();
-                        break;
-                    case "Remove employee":
-                        removeEmployee();
-                        break;
-                    case "Update employee":
-                        updateEmployee();
-                        break;
-                    case "Main Menu":
-                        mainMenu();
-                        break;
-                    case "exit":
-                        connection.end();
-                        return;
-                }
-            });
-    }
-    console.log(
-        `------\nThere are no departments in your business yet.\n------`
-    );
-    addEmployee();
 };
 
 addEmployee = () => {
@@ -119,12 +117,18 @@ addEmployee = () => {
             },
             {
                 name: "roleId",
-                message: "Please enter the employees roleID:",
-                type: "input",
+                message: "Please select the employees role:",
+                type: "list",
+                choices: [
+                    "dynamically built array based on what roles are in the role table",
+                ],
             },
             {
                 name: "managerId",
                 message: "Please enter the employees Manager Id:",
+                choices: [
+                    "dynamiocally built array based on what managers are in the employee table",
+                ],
                 type: "input",
             },
         ])
@@ -144,6 +148,67 @@ addEmployee = () => {
                 }
             );
         });
+};
+
+selectEmployee = () => {
+    connection.query(`select * from employee`, (err, res) => {
+        if (err) console.log(err);
+        const employeeChoices = res.map((employee) => {
+            const obj = {
+                name: `${employee.first_name} ${employee.last_name}`,
+                value: employee.id,
+            };
+            return obj;
+        });
+        return employeeChoices;
+    });
+};
+removeEmployee = () => {
+    connection.query(`select * from employee`, (err, res) => {
+        if (err) console.log(err);
+        const employeeChoices = res.map((employee) => {
+            const obj = {
+                name: `${employee.first_name} ${employee.last_name}`,
+                value: employee.id,
+            };
+            return obj;
+        });
+        // console.log(employeeChoices);
+        // let newMap = employeeChoices.map((employee) => employee.name);
+        // console.log(newMap);
+        console.log(employeeChoices);
+        inquirer
+            .prompt({
+                type: "list",
+                message: "select which employee you wish to remove",
+                choices: employeeChoices,
+                name: "removeEmployee",
+            })
+            .then((choice) => {
+                connection.query(
+                    `DELETE from employee WHERE ?`,
+                    { id: choice.removeEmployee },
+                    (err, res) => {
+                        if (err) console.log(err);
+                        console.log("Employee Deleted");
+                        mainMenu();
+                    }
+                );
+            });
+    });
+};
+updateEmployeeRole = () => {
+    connection.query("select * from role", (err, res) => {
+        if (err) console.log(err);
+        const roleChoices = res.map((role) => {
+            const obj = {
+                name: role.title,
+                value: role.id,
+            };
+            return obj;
+        });
+        inquirer.prompt({ type: "list", message: "" });
+    });
 };
 
 editDepartments = () => {
@@ -283,7 +348,7 @@ viewTable = (tableName) => {
     });
 };
 
-checckTable = (tableName) => {
+checkTable = (tableName) => {
     connection.query(`select * from ${tableName}`, (err, res) => {
         if (err) console.log(err);
         if (res.length > 0) return true;
@@ -292,3 +357,5 @@ checckTable = (tableName) => {
 };
 
 mainMenu();
+
+// editEmployeeMenu();
