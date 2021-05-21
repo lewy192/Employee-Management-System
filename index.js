@@ -36,7 +36,8 @@ mainMenu = () => {
         .then((choice) => {
             switch (choice.action) {
                 case "View All Employees":
-                    viewTable("employee");
+                    connection.query(`select * from employee
+                from`);
                     break;
                 case "View All Departments":
                     viewTable("department");
@@ -63,38 +64,44 @@ mainMenu = () => {
 };
 
 editEmployeeMenu = () => {
-    inquirer
-        .prompt({
-            name: "action",
-            type: "list",
-            message: "What would you like to do?",
-            choices: [
-                "Add employee",
-                "Remove employee",
-                "Update employee",
-                "Main Menu",
-                "exit",
-            ],
-        })
-        .then((choice) => {
-            switch (choice.action) {
-                case "Add employee":
-                    addEmployee();
-                    break;
-                case "Remove employee":
-                    removeEmployee();
-                    break;
-                case "Update employee":
-                    updateEmployee();
-                    break;
-                case "Main Menu":
-                    mainMenu();
-                    break;
-                case "exit":
-                    connection.end();
-                    return;
-            }
-        });
+    if (!checkTable("employee")) {
+        inquirer
+            .prompt({
+                name: "action",
+                type: "list",
+                message: "What would you like to do?",
+                choices: [
+                    "Add employee",
+                    "Remove employee",
+                    "Update employee",
+                    "Main Menu",
+                    "exit",
+                ],
+            })
+            .then((choice) => {
+                switch (choice.action) {
+                    case "Add employee":
+                        addEmployee();
+                        break;
+                    case "Remove employee":
+                        removeEmployee();
+                        break;
+                    case "Update employee":
+                        updateEmployee();
+                        break;
+                    case "Main Menu":
+                        mainMenu();
+                        break;
+                    case "exit":
+                        connection.end();
+                        return;
+                }
+            });
+    }
+    console.log(
+        `------\nThere are no departments in your business yet.\n------`
+    );
+    addEmployee();
 };
 
 addEmployee = () => {
@@ -140,32 +147,126 @@ addEmployee = () => {
 };
 
 editDepartments = () => {
-    inquirer.prompt({
-        name: "action",
-        type: "list",
-        message: "What would you like to do?",
-        choices: [
-            "Add Department",
-            "Remove Department",
-            "Update Department",
-            "Main Menu",
-            "exit",
-        ],
-    });
+    viewTable();
+    if (!checkTable("department")) {
+        inquirer
+            .prompt({
+                name: "action",
+                type: "list",
+                message: "What would you like to do?",
+                choices: [
+                    "Add Department",
+                    "Remove Department",
+                    "Update Department",
+                    "Main Menu",
+                    "exit",
+                ],
+            })
+            .then((choices) => {
+                switch (choices.action) {
+                    case "Add Department":
+                        addDepartment();
+                        break;
+                    case "Remove Department":
+                        removeDepartment();
+                        break;
+                    case "Update Department":
+                        updateDepartment();
+                        break;
+                    case "Main Menu":
+                        mainMenu();
+                        break;
+                    case "exit":
+                        connection.end();
+                        return;
+                    default:
+                        mainMenu();
+                        break;
+                }
+            });
+    }
+    console.log(
+        `------\nThere are no departments in your business yet.\n------`
+    );
+    addDepartment();
 };
+removeDepartment = () => {
+    inquirer
+        .prompt([
+            {
+                name: departmentName,
+                message: "Enter the name of the department you wish to remove:",
+                type: "input",
+            },
+        ])
+        .then((answer) => {
+            connection.query(
+                `DELETE FROM department WHERE name = ${answer.departmentName}`,
+                (err, res) => {
+                    if (err) console.log(err);
+                    console.table(res);
+                    console.log("^^^^^^ Has been removed ^^^^^^");
+                }
+            );
+        });
+};
+
+addDepartment = () => {
+    inquirer
+        .prompt([
+            {
+                name: "departmentName",
+                message: "Please enter a department name:",
+                type: "input",
+            },
+        ])
+        .then((answers) => {
+            connection.query(`INSERT INTO department SET ?`, {
+                name: answers.departmentName,
+            });
+            inquirer
+                .prompt([
+                    {
+                        name: userChoice,
+                        message: "where would you like to go from here?",
+                        type: "list",
+                        choices: ["Main Menu", "Edit departments", "Exit"],
+                    },
+                ])
+                .then((choice) => {
+                    switch (choice.userChoice) {
+                        case "Main Menu":
+                            mainMenu();
+                            break;
+                        case "Edit departments":
+                            editDepartments();
+                            break;
+                        case "Exit":
+                            return;
+                        default:
+                            mainMenu();
+                            break;
+                    }
+                });
+        });
+};
+
 editRoles = () => {
-    inquirer.prompt({
-        name: "action",
-        type: "list",
-        message: "What would you like to do?",
-        choices: [
-            "Add Role",
-            "Remove Role",
-            "Update Role",
-            "Main Menu",
-            "exit",
-        ],
-    });
+    if (!checkTable("role")) {
+        inquirer.prompt({
+            name: "action",
+            type: "list",
+            message: "What would you like to do?",
+            choices: [
+                "Add Role",
+                "Remove Role",
+                "Update Role",
+                "Main Menu",
+                "exit",
+            ],
+        });
+    }
+    console.log(`------\nThere are no roles in your business yet.\n------`);
 };
 
 viewTable = (tableName) => {
@@ -175,10 +276,18 @@ viewTable = (tableName) => {
             console.table(res);
         } else {
             console.log(
-                `------\n There are no ${tableName}s in your business yet.\n------`
+                `------\nThere are no ${tableName}s in your business yet.\n------`
             );
             mainMenu();
         }
+    });
+};
+
+checckTable = (tableName) => {
+    connection.query(`select * from ${tableName}`, (err, res) => {
+        if (err) console.log(err);
+        if (res.length > 0) return true;
+        return false;
     });
 };
 
