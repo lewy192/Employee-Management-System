@@ -77,6 +77,7 @@ mainMenu = () => {
                     // viewTable("department");
                     break;
                 case "View All Employees By Department":
+                    // TODO
                     break;
                 case "View All Departments":
                     viewTable("department");
@@ -150,24 +151,6 @@ addEmployee = () => {
         });
 };
 
-// selectEmployee = () => {
-//     return new Promise(function (resolve, reject) {
-//         connection.query(`select * from employee`, (err, res) => {
-//             if (err) console.log(err);
-//             const employeeChoices = res.map((employee) => {
-//                 const obj = {
-//                     name: `${employee.first_name} ${employee.last_name}`,
-//                     value: employee.id,
-//                 };
-//                 return obj;
-//             });
-//             // return employeeDetails;
-//             console.log(`SELECT EMPLOYEE: ${employeeChoices}`); //TODO: why does this return: SELECT EMPLOYEE: [object Object],[object Object]
-//             resolve(employeeChoices);
-//             console.log(`SELECT EMPLOYEE: ${employeeChoices}`);
-//         });
-//     });
-// };
 removeEmployee = () => {
     // selectEmployee().then(function (results) {
     //     console.log(`--------- PROMISE RESULTS : \n${results[0]}\n ---------`);
@@ -256,6 +239,68 @@ updateEmployeeRole = () => {
                             );
                         });
                 });
+            });
+    });
+};
+
+updateEmployeeManager = () => {
+    connection.query(`select * from employee where manager_id`, (err, res) => {
+        if (err) console.log(err);
+        const employeeChoices = res.map((employee) => {
+            const obj = {
+                name: `${employee.first_name} ${employee.last_name}`,
+                value: employee.id,
+            };
+            return obj;
+        });
+        inquirer
+            .prompt({
+                name: "employeeManagerChange",
+                type: "list",
+                choices: employeeChoices,
+                message:
+                    "Please select the employee who's manager you'd like to change:",
+            })
+            .then((usersEmployeeChoice) => {
+                connection.query(
+                    `select * from employee where manager_id is null`,
+
+                    (err, res) => {
+                        console.table(res);
+                        if (err) console.log(err);
+                        const managerChoices = res.map((manager) => {
+                            const obj = {
+                                name: `${manager.first_name} ${manager.last_name}`,
+                                value: manager.id,
+                            };
+                            return obj;
+                        });
+                        inquirer
+                            .prompt({
+                                type: "list",
+                                message: "Please select their new manager:",
+                                choices: managerChoices,
+                                name: "managerChoice",
+                            })
+                            .then((usersManagerChoice) => {
+                                const newManagerId =
+                                    usersManagerChoice.managerChoice;
+                                const employeesId =
+                                    usersEmployeeChoice.employeeManagerChange;
+                                connection.query(
+                                    `update employee
+                            set manager_id = ?
+                            where id = ?`,
+                                    [newManagerId, employeesId],
+                                    (err, res) => {
+                                        if (err) console.log(err);
+                                        console.log(res);
+                                    }
+                                );
+                                console.log("");
+                            });
+                    }
+                );
             });
     });
 };
@@ -407,5 +452,6 @@ checkTable = (tableName) => {
 
 // mainMenu();
 // removeEmployee();
-updateEmployeeRole();
+// updateEmployeeRole();
 // editEmployeeMenu();
+updateEmployeeManager();
