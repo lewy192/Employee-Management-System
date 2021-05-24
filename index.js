@@ -1,24 +1,25 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
+const cTable = require("console.table");
 const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "rootroot",
-    database: "departments",
+    password: "lewyiscool92",
+    database: "department",
 });
 
+const contentSeparator = "----------------\n";
 connection.connect(function (err) {
     if (err) {
         return console.error("error: " + err.message);
     }
 
-    console.log("Connected to the MySQL server.");
+    // console.log("Connected to the MySQL server.");
 });
-mainMenu = () => {
-    // TODO : check if departement and roles are empty
-    // if so push the user to enter atleast 1 department and role
-    // connection.qusery(`SELECT * from users `,)
-
+mainMenu = (greeting = "Back To") => {
+    console.log(
+        `---------------------------------\nWelcome ${greeting} The Main Menu\n---------------------------------\n\n`
+    );
     inquirer
         .prompt({
             name: "action",
@@ -30,6 +31,10 @@ mainMenu = () => {
                 "View All Employees By Manager",
                 "View All Departments",
                 "View All Roles",
+                "View All Roles By Department",
+                "Add Role",
+                "Add Department",
+                "Add Employee",
                 "Remove Employee",
                 "Update Employees Role",
                 "Edit departments",
@@ -85,6 +90,18 @@ mainMenu = () => {
                 case "View All Roles":
                     viewTable("role");
                     break;
+                case "View All Roles By Department":
+                    viewRolesByDepartment();
+                    break;
+                case "Add Role":
+                    addRoles();
+                    break;
+                case "Add Department":
+                    addDepartment();
+                    break;
+                case "Add Employee":
+                    addEmployee();
+                    break;
                 case "Remove Employee":
                     removeEmployee();
                     break;
@@ -103,52 +120,105 @@ mainMenu = () => {
         });
 };
 
-addEmployee = () => {
-    inquirer
-        .prompt([
-            {
-                name: "firstName",
-                message: "Please enter the employees first name:",
-                type: "input",
-            },
-            {
-                name: "lastName",
-                message: "Please enter the employees last name:",
-                type: "input",
-            },
-            {
-                name: "roleId",
-                message: "Please select the employees role:",
+employeeChoicesArray = (responseArray) => {
+    return responseArray.map((employee) => ({
+        name: `${employee.first_name} ${employee.last_name}`,
+        value: employee.id,
+    }));
+};
+
+viewRolesByDepartment = () => {
+    connection.query(`select * from department`, (err, res) => {
+        if (err) console.log(err);
+        const departmentChoices = res.map((department) => ({
+            name: department.department_name,
+            value: department.id,
+        }));
+        inquirer
+            .prompt({
+                name: "departmentSelected",
+                message:
+                    "Please Select the department whose roles you'd like to see",
+                choices: departmentChoices,
                 type: "list",
-                choices: [
-                    "dynamically built array based on what roles are in the role table",
-                ],
-            },
-            {
-                name: "managerId",
-                message: "Please enter the employees Manager Id:",
-                choices: [
-                    "dynamiocally built array based on what managers are in the employee table",
-                ],
-                type: "input",
-            },
-        ])
-        .then((answers) => {
-            connection.query(
-                "INSERT INTO employee SET ?",
-                {
-                    first_name: answers.firstName,
-                    last_name: answers.lastName,
-                    role_id: answers.roleId,
-                    manager_id: answers.managerId,
-                },
-                (err, res) => {
-                    if (err) throw err;
-                    console.log("Employee Successfully added");
-                    console.table(res.affectedRows);
-                }
+            })
+            .then((answer) => {
+                connection.query(
+                    `select * from role where ?`,
+                    { department_id: answer.departmentSelected },
+                    (err, res) => {
+                        if (err) console.log(err);
+                        console.table(res);
+                        mainMenu();
+                    }
+                );
+            });
+    });
+};
+
+addEmployee = () => {
+    connection.query("Select * from role", (err, res) => {
+        if (err) console.log(err);
+        const rolesToChooseFrom = employeeChoicesArray(res);
+        if (!rolesToChooseFrom) {
+            console.log(
+                "-------\n There Are No Role To Choose From Please Create Atleast One Role First"
             );
-        });
+            addRoles();
+        }
+        connection.query(
+            "select * from employee where manager_id is null",
+            (err, res) => {
+                if (err) console.log(err);
+                console.table(res);
+                const managersSelection = employeeChoicesArray(res).push(null);
+                inquirer
+                    .prompt([
+                        {
+                            name: "firstName",
+                            message: "Please enter the employees first name:",
+                            type: "input",
+                        },
+                        {
+                            name: "lastName",
+                            message: "Please enter the employees last name:",
+                            type: "input",
+                        },
+                        {
+                            name: "roleId",
+                            message: "Please select the employees role:",
+                            type: "list",
+                            // TODO: if roles.length === 0 go add role
+                            choices: rolesToChooseFrom,
+                        },
+                        {
+                            name: "managerId",
+                            message:
+                                "Please enter the employees Manager Id: (null if manager)",
+                            choices: managersSelection,
+                            type: "input",
+                        },
+                    ])
+                    .then((answers) => {
+                        connection.query(
+                            "INSERT INTO employee SET ?",
+                            {
+                                first_name: answers.firstName,
+                                last_name: answers.lastName,
+                                role_id: answers.roleId,
+                                manager_id: answers.managerId,
+                            },
+                            (err, res) => {
+                                if (err) throw err;
+                                console.log("Employee Successfully added");
+                                console.table(res.affectedRows);
+                                mainMenu();
+                            }
+                        );
+                    });
+            }
+        );
+    });
 };
 
 removeEmployee = () => {
@@ -166,7 +236,12 @@ removeEmployee = () => {
             return obj;
         });
 
-        console.log(employeeChoices);
+        if (!employeeChoices) {
+            console.log(
+                `${contentSeparator} There are no employees to remove :(, try adding some${contentSeparator}`
+            );
+            addEmployee();
+        }
         inquirer
             .prompt({
                 type: "list",
@@ -237,6 +312,7 @@ updateEmployeeRole = () => {
                                     console.log(res);
                                 }
                             );
+                            mainMenu();
                         });
                 });
             });
@@ -297,7 +373,7 @@ updateEmployeeManager = () => {
                                         console.log(res);
                                     }
                                 );
-                                console.log("");
+                                mainMenu();
                             });
                     }
                 );
@@ -349,6 +425,7 @@ editDepartments = () => {
     );
     addDepartment();
 };
+
 removeDepartment = () => {
     inquirer
         .prompt([
@@ -360,7 +437,8 @@ removeDepartment = () => {
         ])
         .then((answer) => {
             connection.query(
-                `DELETE FROM department WHERE name = ${answer.departmentName}`,
+                `DELETE FROM department WHERE ?`,
+                { name: answer.departmentName },
                 (err, res) => {
                     if (err) console.log(err);
                     console.table(res);
@@ -380,59 +458,75 @@ addDepartment = () => {
             },
         ])
         .then((answers) => {
-            connection.query(`INSERT INTO department SET ?`, {
-                name: answers.departmentName,
-            });
-            inquirer
-                .prompt([
-                    {
-                        name: userChoice,
-                        message: "where would you like to go from here?",
-                        type: "list",
-                        choices: ["Main Menu", "Edit departments", "Exit"],
-                    },
-                ])
-                .then((choice) => {
-                    switch (choice.userChoice) {
-                        case "Main Menu":
-                            mainMenu();
-                            break;
-                        case "Edit departments":
-                            editDepartments();
-                            break;
-                        case "Exit":
-                            return;
-                        default:
-                            mainMenu();
-                            break;
-                    }
+            connection.query(
+                `INSERT INTO department SET ?`,
+                {
+                    department_name: answers.departmentName,
+                },
+                (err, res) => {
+                    console.log(res);
+                    if (err) console.log(err);
+                    console.log(
+                        `-------------------\n${answers.departmentName} has been created\n-------------------\n\n`
+                    );
+                    mainMenu();
+                }
+            );
+        });
+};
+
+addRoles = () => {
+    connection.query(`select * from department`, (err, res) => {
+        if (err) console.log(err);
+        if (!res) {
+            console.log(
+                "------\nThere are no departments in your business yet. Add one and then comeback\n------`"
+            );
+            addDepartment();
+        }
+        const departements = res.map((department) => ({
+            name: department.department_name,
+            value: department.id,
+        }));
+        inquirer
+            .prompt([
+                {
+                    name: "roleDepartment",
+                    message:
+                        "Please Select the department where the new role belongs",
+                    choices: departements,
+                    type: "list",
+                },
+                {
+                    name: "roleTitle",
+                    message: "Enter the title of the new role:",
+                    type: "input",
+                },
+                {
+                    name: "roleSalary",
+                    message: "Please enter the salary of the new role:",
+                    type: "input",
+                },
+            ])
+            .then((answers) => {
+                connection.query(`insert into role set ? `, {
+                    title: answers.roleTitle,
+                    salary: answers.roleSalary,
+                    department_id: answers.roleDepartment,
                 });
-        });
+                console.log(
+                    `-------------------\n${answers.roleTitle} Has been created \n-------------------\n\n`
+                );
+                mainMenu();
+            });
+    });
 };
-
-editRoles = () => {
-    if (!checkTable("role")) {
-        inquirer.prompt({
-            name: "action",
-            type: "list",
-            message: "What would you like to do?",
-            choices: [
-                "Add Role",
-                "Remove Role",
-                "Update Role",
-                "Main Menu",
-                "exit",
-            ],
-        });
-    }
-    console.log(`------\nThere are no roles in your business yet.\n------`);
-};
-
 viewTable = (tableName) => {
     connection.query(`SELECT * from ${tableName}`, (err, res) => {
         if (err) console.log(err);
         if (res.length > 0) {
             console.table(res);
+            mainMenu();
         } else {
             console.log(
                 `------\nThere are no ${tableName}s in your business yet.\n------`
@@ -450,8 +544,10 @@ checkTable = (tableName) => {
     });
 };
 
-// mainMenu();
+mainMenu("To");
 // removeEmployee();
 // updateEmployeeRole();
 // editEmployeeMenu();
-updateEmployeeManager();
+// updateEmployeeManager();
+// addEmployee();
+// addRoles();
