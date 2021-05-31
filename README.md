@@ -1,7 +1,56 @@
 # Employee-Management-System
-CLI app to manage employees
-client_secret_917762725420-48qvivtjgfpkiokb90htrkf1r8b3j7s9.apps.googleusercontent.com.json
-python3 -m googlesamples.assistant.auth_helpers --client-secrets client_secret_917762725420-48qvivtjgfpkiokb90htrkf1r8b3j7s9.apps.googleusercontent.com.json
 
+## Licence
 
-google-oauthlib-tool --client-secrets /Users/lewismac/googleassistant/client_secret_917762725420-48qvivtjgfpkiokb90htrkf1r8b3j7s9.apps.googleusercontent.com.json --scope https://www.googleapis.com/auth/assistant-sdk-prototype --save --headless
+![MIT](https://img.shields.io/badge/License-MIT-green.svg)
+
+## Description
+
+My motivation for this project was: To organise departments, team members and roles in a Database.
+
+I built this project because To organise departments, team members and roles in a Database.
+
+This project solves the following problem It automates the proccess of filling in a database by hand by using prompt based CLI.
+
+From this project I learnt Mysql joins get messy quickly.
+
+## Contents
+
+-   [Installation](#installation)
+-   [Licence](#licence)
+-   [Features](#features)
+-   [Contributions](#contributions)
+-   [Questions](#questions)
+
+## Installation
+
+To install this project Download the code from my repo, install node js.
+
+## Features
+
+-   inquirer prompts.
+-   MySQL database.
+
+## Dependencies
+
+To install dependencies run:
+`npm install`
+
+## Testing
+
+To run tests use the command:
+`no tests for this porject`
+
+## Contributions
+
+email me with a recommendation. :).
+
+## Questions
+
+-   Contact me via [GitHub](https://github.com/lewy192)
+-   Contact me via [Email](mailto:lewis.james.hill@outlook.com)
+
+## Acknowledgements
+
+-   [w3schools](https://www.w3schools.com/)
+-   [StackOverflow](https://stackoverflow.com/)

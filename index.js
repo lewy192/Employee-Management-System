@@ -4,8 +4,8 @@ const cTable = require("console.table");
 const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "lewyiscool92",
-    database: "department",
+    password: "rootroot",
+    database: "departments",
 });
 
 const contentSeparator = "----------------\n";
@@ -13,8 +13,6 @@ connection.connect(function (err) {
     if (err) {
         return console.error("error: " + err.message);
     }
-
-    // console.log("Connected to the MySQL server.");
 });
 mainMenu = (greeting = "Back To") => {
     console.log(
@@ -37,7 +35,7 @@ mainMenu = (greeting = "Back To") => {
                 "Add Employee",
                 "Remove Employee",
                 "Update Employees Role",
-                "Edit departments",
+                // "View Total utilised budget of a dpeartment",
                 "exit",
             ],
         })
@@ -56,6 +54,12 @@ mainMenu = (greeting = "Back To") => {
                             if (err) {
                                 console.log(err);
                                 mainMenu();
+                            }
+                            if (!res) {
+                                console.log(
+                                    "\nThere are no employees yet, try adding some and comeback!\n"
+                                );
+                                addEmployee();
                             }
                             console.table(res);
                             mainMenu();
@@ -81,8 +85,24 @@ mainMenu = (greeting = "Back To") => {
                     );
                     // viewTable("department");
                     break;
-                case "View All Employees By Department":
-                    // TODO
+                case "View All Employees By Manager":
+                    connection.query(
+                        `select concat(e2.first_name,', ',e2.last_name) as 'Employees Name', 
+                    r.title as 'Employees Role',
+                    CONCAT(e2.first_name,', ',e2.last_name) as 'Managers Name'
+                    from employee e1 
+                    inner join employee e2 on 
+                    e1.manager_id = e2.id
+                    inner join role r on 
+                    e1.role_id = r.id`,
+                        (err, res) => {
+                            if (err) console.log(err);
+                            if (!res) {
+                                console.log("No employees by manager");
+                            }
+                            console.table(res);
+                        }
+                    );
                     break;
                 case "View All Departments":
                     viewTable("department");
@@ -107,9 +127,6 @@ mainMenu = (greeting = "Back To") => {
                     break;
                 case "Update Employees Role":
                     updateEmployeeRole();
-                    break;
-                case "Edit departments":
-                    editDepartments();
                     break;
                 case "exit":
                     connection.end();
@@ -155,6 +172,18 @@ viewRolesByDepartment = () => {
             });
     });
 };
+
+// viewEmployeesByManager = () => {
+//     connection.query(
+//         "select * from employee where manager_id is null",
+//         (err, res) => {
+//             if (err) console.log(err);
+//             console.table(res);
+//             const managersSelection = employeeChoicesArray(res).push(null);
+//             inquirer.prompt({ name: "managerChoice", type: "list",'Please Select a manger you want to sort by' });
+//         }
+//     );
+// };
 
 addEmployee = () => {
     connection.query("Select * from role", (err, res) => {
