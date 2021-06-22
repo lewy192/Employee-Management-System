@@ -8,6 +8,14 @@ const connection = mysql.createConnection({
     database: "departments",
 });
 
+validateInput = (input) => {
+    // input ? true : "dont leave me blank :(";
+    if (input) {
+        return true;
+    }
+    return "dont leave me blank :(";
+};
+
 const contentSeparator = "----------------\n";
 connection.connect(function (err) {
     if (err) {
@@ -87,7 +95,7 @@ mainMenu = (greeting = "Back To") => {
                     break;
                 case "View All Employees By Manager":
                     connection.query(
-                        `select concat(e2.first_name,', ',e2.last_name) as 'Employees Name', 
+                        `select concat(e1.first_name,', ',e1.last_name) as 'Employees Name', 
                     r.title as 'Employees Role',
                     CONCAT(e2.first_name,', ',e2.last_name) as 'Managers Name'
                     from employee e1 
@@ -100,7 +108,9 @@ mainMenu = (greeting = "Back To") => {
                             if (!res) {
                                 console.log("No employees by manager");
                             }
+
                             console.table(res);
+                            mainMenu();
                         }
                     );
                     break;
@@ -188,7 +198,10 @@ viewRolesByDepartment = () => {
 addEmployee = () => {
     connection.query("Select * from role", (err, res) => {
         if (err) console.log(err);
-        const rolesToChooseFrom = employeeChoicesArray(res);
+        const rolesToChooseFrom = res.map((role) => ({
+            name: role.title,
+            value: role.id,
+        }));
         if (!rolesToChooseFrom) {
             console.log(
                 "-------\n There Are No Role To Choose From Please Create Atleast One Role First"
@@ -196,9 +209,16 @@ addEmployee = () => {
             addRoles();
         }
         connection.query(
-            "select * from employee where manager_id is null",
+            `select concat(e.first_name,', ',e.last_name) as 'Employees Name',
+            e.id as 'Managers Id', 
+            r.title as 'Employees Role'
+            from employee e
+            inner join role r
+            on e.role_id = r.id
+            where e.manager_id is null `,
             (err, res) => {
                 if (err) console.log(err);
+
                 console.table(res);
                 const managersSelection = employeeChoicesArray(res).push(null);
                 inquirer
@@ -207,16 +227,19 @@ addEmployee = () => {
                             name: "firstName",
                             message: "Please enter the employees first name:",
                             type: "input",
+                            validate: validateInput,
                         },
                         {
                             name: "lastName",
                             message: "Please enter the employees last name:",
                             type: "input",
+                            validate: validateInput,
                         },
                         {
                             name: "roleId",
                             message: "Please select the employees role:",
                             type: "list",
+                            validate: validateInput,
                             // TODO: if roles.length === 0 go add role
                             choices: rolesToChooseFrom,
                         },
@@ -226,6 +249,7 @@ addEmployee = () => {
                                 "Please enter the employees Manager Id: (null if manager)",
                             choices: managersSelection,
                             type: "input",
+                            validate: validateInput,
                         },
                     ])
                     .then((answers) => {
@@ -484,6 +508,7 @@ addDepartment = () => {
                 name: "departmentName",
                 message: "Please enter a department name:",
                 type: "input",
+                validate: validateInput,
             },
         ])
         .then((answers) => {
@@ -493,7 +518,6 @@ addDepartment = () => {
                     department_name: answers.departmentName,
                 },
                 (err, res) => {
-                    console.log(res);
                     if (err) console.log(err);
                     console.log(
                         `-------------------\n${answers.departmentName} has been created\n-------------------\n\n`
@@ -517,24 +541,27 @@ addRoles = () => {
             name: department.department_name,
             value: department.id,
         }));
+
         inquirer
             .prompt([
                 {
                     name: "roleDepartment",
                     message:
                         "Please Select the department where the new role belongs",
-                    choices: departements,
+                    choices: departments,
                     type: "list",
                 },
                 {
                     name: "roleTitle",
                     message: "Enter the title of the new role:",
                     type: "input",
+                    validate: validateInput,
                 },
                 {
                     name: "roleSalary",
                     message: "Please enter the salary of the new role:",
                     type: "input",
+                    validate: validateInput,
                 },
             ])
             .then((answers) => {
