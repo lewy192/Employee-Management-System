@@ -14,6 +14,10 @@ This project solves the following problem It automates the proccess of filling i
 
 From this project I learnt Mysql joins get messy quickly.
 
+## Video Tutorial
+
+[Here](https://youtu.be/lXDWgTWweag) you will find a video explaining its functionality and an example.
+
 ## Contents
 
 -   [Installation](#installation)

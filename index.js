@@ -246,15 +246,17 @@ addEmployee = () => {
                         {
                             name: "managerId",
                             message:
-                                "Please enter the employees Manager Id: (null if manager)",
-                            choices: managersSelection,
+                                "Please enter the employees Manager Id: (blank manager)",
                             type: "input",
-                            validate: validateInput,
                         },
                     ])
                     .then((answers) => {
+                        if (!answers.managerId) {
+                            answers.managerId = null;
+                        }
                         connection.query(
                             "INSERT INTO employee SET ?",
+
                             {
                                 first_name: answers.firstName,
                                 last_name: answers.lastName,
@@ -362,7 +364,7 @@ updateEmployeeRole = () => {
                                 ],
                                 (err, res) => {
                                     if (err) console.log(err);
-                                    console.log(res);
+                                    console.log("Employee Role Updated");
                                 }
                             );
                             mainMenu();
@@ -541,14 +543,13 @@ addRoles = () => {
             name: department.department_name,
             value: department.id,
         }));
-
         inquirer
             .prompt([
                 {
                     name: "roleDepartment",
                     message:
                         "Please Select the department where the new role belongs",
-                    choices: departments,
+                    choices: departements,
                     type: "list",
                 },
                 {
@@ -577,6 +578,7 @@ addRoles = () => {
             });
     });
 };
+
 viewTable = (tableName) => {
     connection.query(`SELECT * from ${tableName}`, (err, res) => {
         if (err) console.log(err);
